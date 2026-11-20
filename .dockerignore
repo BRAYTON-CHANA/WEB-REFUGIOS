@@ -1,0 +1,21 @@
+node_modules
+frontend/node_modules
+frontend/dist
+.git
+.env
+.env.*
+!.env.example
+frontend/.env*
+logs
+*.log
+.vscode
+.idea
+.vercel
+# Herramientas de IA y notas internas
+AGENTS.md
+CLAUDE.md
+.agents
+.claude
+.devin
+.github
+skills-lock.json

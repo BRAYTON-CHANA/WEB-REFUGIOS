@@ -28,7 +28,7 @@ export const db = {
   selectPaginated: (table, page, pageSize, filters, fields, orderBy) => executeFunction('selectPaginated', { table, page, pageSize, filters, fields, orderBy }),
   count: (table, filters) => executeFunction('count', { table, filters }),
 
-  // Solo admin: SQL con parámetros (? o $n). Escribir SQL portable (ver AGENTS.md)
+  // Solo admin: SQL con parámetros (? o $n). Escribir SQL portable
   query: (sql, ...params) => executeFunction('query', { sql, params }),
 
   // Stored procedure (mssql) / función (postgres); params → p_snake_case

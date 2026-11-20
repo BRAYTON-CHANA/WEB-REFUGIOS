@@ -6,7 +6,7 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /*
- * Paleta (AGENTS.md → Diseño). Base neutra fría: los únicos colores vivos de la app
+ * Paleta. Base neutra fría: los únicos colores vivos de la app
  * son los de ESTADOS (colores de fila del Excel). Solo modo claro.
  */
 :root {

@@ -4,7 +4,7 @@ import ProtectedRoute from '@/shared/components/ProtectedRoute';
 import { AppLayout } from '@/features/layout';
 import { APP_CONFIG } from '@/app/config';
 
-// Páginas: solo desde app/views/<ruta> (ver AGENTS.md → "Dónde va cada cosa")
+// Páginas: solo desde app/views/<ruta>; cada una re-exporta un componente de features/
 import NotFound from '@/app/views/not-found';
 import Login from '@/app/views/login';
 import CambiarContrasena from '@/app/views/cambiar-contrasena';

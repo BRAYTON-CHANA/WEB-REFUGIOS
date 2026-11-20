@@ -117,5 +117,3 @@ frontend/src/
   `api/<nombre>/[...path].js` y montarlo en `server.js` (ejemplo: `eventos`).
 - **Cambiar el esquema de una BD con datos**: `database/sql/<motor>/migrations/` +
   `npm run db:migrate`.
-
-Más detalle de convenciones en [AGENTS.md](AGENTS.md).

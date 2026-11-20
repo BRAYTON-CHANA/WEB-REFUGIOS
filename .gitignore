@@ -25,3 +25,12 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Herramientas de IA y notas internas (locales, no se comparten)
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+.devin/
+.github/skills/
+skills-lock.json

@@ -4,7 +4,7 @@ import { db } from '@/shared/api';
 import { authService } from '@/features/login';
 import { useAuthContext } from '@/shared/context/AuthContext';
 import {
-  Modal, Spinner, EmptyState, Badge, Button, Field, Input, ErrorAlert, PageHeader, Table, Tr, Td, IconButton,
+  Modal, Spinner, EmptyState, Badge, Button, Field, Input, PasswordInput, ErrorAlert, PageHeader, Table, Tr, Td, IconButton,
 } from '@/shared/components/ui';
 import { Toast, useToast } from '@/shared/components/Toast';
 
@@ -150,11 +150,11 @@ const Usuarios = () => {
                 <span className="font-medium">{u.NOMBRES} {u.APELLIDOS || ''}</span>
                 {u.REQUIERE_CAMBIO_PASSWORD ? <span className="block text-[10px] text-amber-600">Debe cambiar clave</span> : null}
               </Td>
-              <Td className="hidden md:table-cell text-slate-500">{u.EMAIL || '—'}</Td>
+              <Td className="hidden md:table-cell text-pizarra">{u.EMAIL || '—'}</Td>
               <Td>
                 {u.ROLES.length
                   ? u.ROLES.map((r) => <Badge key={r} color={r === 'admin' ? '#dc2626' : '#2563eb'}>{r}</Badge>)
-                  : <span className="text-slate-400 text-xs">sin rol</span>}
+                  : <span className="text-pizarra text-xs">sin rol</span>}
               </Td>
               <Td><Badge color={u.ACTIVO ? '#16a34a' : '#64748b'}>{u.ACTIVO ? 'Activo' : 'Inactivo'}</Badge></Td>
               <Td className="text-right whitespace-nowrap">
@@ -177,7 +177,7 @@ const Usuarios = () => {
             </Field>
             {!editando && (
               <Field label="Clave inicial" required help="Mínimo 8 caracteres">
-                <Input type="password" value={form.password || ''} onChange={set('password')} autoComplete="new-password" />
+                <PasswordInput value={form.password || ''} onChange={set('password')} autoComplete="new-password" />
               </Field>
             )}
             <Field label="Nombres" required>
@@ -195,8 +195,8 @@ const Usuarios = () => {
               {roles.map((r) => (
                 <label key={r.ID_ROL} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs cursor-pointer ${
                   rolesSel.has(r.ID_ROL)
-                    ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300'
-                    : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'
+                    ? 'bg-grafito border-grafito text-hoja'
+                    : 'border-trazo text-grafito hover:bg-niebla'
                 }`}>
                   <input type="checkbox" className="hidden" checked={rolesSel.has(r.ID_ROL)} onChange={() => toggleRol(r.ID_ROL)} />
                   {r.NOMBRE_ROL}
@@ -212,10 +212,10 @@ const Usuarios = () => {
       </Modal>
 
       <Modal open={Boolean(temporal)} onClose={() => setTemporal(null)} title="Clave temporal">
-        <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+        <p className="text-sm text-grafito mb-3">
           Entrégale esta clave a <strong>{temporal?.usuario}</strong>. Se muestra una sola vez y deberá cambiarla al entrar.
         </p>
-        <p className="font-mono text-lg text-center bg-slate-100 dark:bg-slate-900 rounded-xl py-3 select-all">{temporal?.clave}</p>
+        <p className="font-mono text-lg text-center bg-niebla rounded-md py-3 select-all">{temporal?.clave}</p>
         <div className="flex justify-end pt-4"><Button onClick={() => setTemporal(null)}>Listo</Button></div>
       </Modal>
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/shared/context/AuthContext';
-import { Button, Field, Input, ErrorAlert } from '@/shared/components/ui';
+import { Button, Field, PasswordInput, ErrorAlert } from '@/shared/components/ui';
 import { authService } from '../services/authService';
 import AuthCard from '../components/AuthCard';
 
@@ -45,14 +45,14 @@ const ChangePassword = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {!obligatorio && (
           <Field label="Contraseña actual">
-            <Input type="password" value={actual} onChange={(e) => setActual(e.target.value)} required autoComplete="current-password" />
+            <PasswordInput value={actual} onChange={(e) => setActual(e.target.value)} required autoComplete="current-password" />
           </Field>
         )}
         <Field label="Nueva contraseña" help="Mínimo 8 caracteres">
-          <Input type="password" value={nueva} onChange={(e) => setNueva(e.target.value)} required minLength={8} autoComplete="new-password" />
+          <PasswordInput value={nueva} onChange={(e) => setNueva(e.target.value)} required minLength={8} autoComplete="new-password" />
         </Field>
         <Field label="Confirmar contraseña">
-          <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
+          <PasswordInput value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
         </Field>
 
         <ErrorAlert>{error}</ErrorAlert>
@@ -67,7 +67,7 @@ const ChangePassword = () => {
             logout();
             navigate('/login');
           }}
-          className="w-full text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          className="w-full text-sm text-pizarra hover:text-grafito"
         >
           {obligatorio ? 'Cerrar sesión' : 'Cancelar'}
         </button>

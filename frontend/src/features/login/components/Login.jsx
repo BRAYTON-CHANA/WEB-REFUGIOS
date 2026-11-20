@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/shared/context/AuthContext';
-import { Button, Field, Input, ErrorAlert } from '@/shared/components/ui';
+import { Button, Field, Input, PasswordInput, ErrorAlert } from '@/shared/components/ui';
 import { APP_CONFIG } from '@/app/config';
 import AuthCard from '../components/AuthCard';
 
@@ -43,8 +43,7 @@ const Login = () => {
           />
         </Field>
         <Field label="Contraseña">
-          <Input
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

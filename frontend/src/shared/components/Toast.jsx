@@ -26,8 +26,8 @@ export const Toast = ({ toast }) => {
   return (
     <div
       role="status"
-      className={`fixed bottom-5 right-5 left-5 sm:left-auto z-[60] px-4 py-3 rounded-xl shadow-xl text-sm text-white animate-slide-up ${
-        toast.esError ? 'bg-red-600' : 'bg-slate-800 dark:bg-slate-700'
+      className={`fixed bottom-5 right-5 left-5 sm:left-auto z-[60] px-4 py-3 rounded-md shadow-xl text-sm animate-slide-up ${
+        toast.esError ? 'bg-red-700 text-white' : 'bg-grafito text-hoja'
       }`}
     >
       {toast.msg}

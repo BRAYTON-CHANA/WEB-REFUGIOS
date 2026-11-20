@@ -5,7 +5,11 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
+    "dev": "node scripts/dev.js",
+    "dev:api": "node --watch server.js",
+    "dev:web": "npm run dev --prefix frontend",
+    "setup": "npm install && npm install --prefix frontend",
+    "build": "npm run build --prefix frontend",
     "db:setup": "node scripts/run-sql.js",
     "db:migrate": "node scripts/run-sql-migrations.js"
   },

@@ -10,16 +10,18 @@ import { tokenUtils } from '@/shared/utils/tokenUtils';
 export async function apiFetch(path, { method = 'GET', body, headers = {}, raw = false } = {}) {
   const token = tokenUtils.getToken();
 
+  // FormData y Blob/File van tal cual (el Content-Type lo pone el navegador o quien llama)
+  const crudo = body instanceof FormData || body instanceof Blob;
   const finalHeaders = { ...headers };
   if (token) finalHeaders['Authorization'] = `Bearer ${token}`;
-  if (body !== undefined && !(body instanceof FormData)) {
+  if (body !== undefined && !crudo) {
     finalHeaders['Content-Type'] = 'application/json';
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: finalHeaders,
-    body: body === undefined ? undefined : (body instanceof FormData ? body : JSON.stringify(body)),
+    body: body === undefined ? undefined : (crudo ? body : JSON.stringify(body)),
   });
 
   if (raw) return response;

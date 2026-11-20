@@ -1,64 +1,88 @@
-import { useState, useEffect, useCallback } from 'react';
-import { FolderOpen, Plus, Pencil, Trash2, FileText, Search, Star } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { FolderOpen, Search, SlidersHorizontal, FileSpreadsheet, Plus, X } from 'lucide-react';
 import { useAuthContext } from '@/shared/context/AuthContext';
 import {
-  Button, Input, Select, ErrorAlert, PageHeader, Spinner, EmptyState, IconButton, Paginacion,
+  Button, Input, Select, ErrorAlert, PageHeader, Spinner, EmptyState, Paginacion,
 } from '@/shared/components/ui';
 import { Toast, useToast } from '@/shared/components/Toast';
-import { formatFecha } from '@/shared/utils/format';
-import { expedientesService } from '../services/expedientesService';
-import { TRAMITES, edad, apellidos } from '../utils/personas';
+import { avisarCambioExpedientes } from '@/features/reportes';
+import { expedientesService, FILTROS_REGISTRO } from '../services/expedientesService';
+import { TRAMITES } from '../utils/personas';
+import { exportarExcel } from '../utils/exportarExcel';
+import { abrirArchivo } from '../utils/archivo';
 import ExpedienteModal from './ExpedienteModal';
+import RegistroTabla from './RegistroTabla';
 
 const ANIO_ACTUAL = new Date().getFullYear();
-const ANIOS = Array.from({ length: 10 }, (_, i) => ANIO_ACTUAL - i);
-const TRAMITE_LABEL = Object.fromEntries(TRAMITES.map((t) => [t.value, t.label]));
+const ANIOS = Array.from({ length: 8 }, (_, i) => ANIO_ACTUAL - i);
+const MAS_FILTROS = ['parentesco', 'nacionalidad', 'tipodoc', 'sexo', 'edad', 'sinnro', 'sinarchivo'];
 
-const th = 'py-2.5 px-3 font-medium text-left';
-const td = 'py-2 px-3 align-top';
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
-/** Fila de una persona dentro del bloque de su expediente */
-const FilaPersona = ({ p }) => {
-  const años = edad(p.FECHA_NACIMIENTO);
-  return (
-    <tr className={p.ES_TITULAR ? 'font-medium text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-300'}>
-      <td className={`${td} ${p.ES_TITULAR ? '' : 'pl-8'}`}>
-        <span className="inline-flex items-center gap-1">
-          {p.ES_TITULAR && <Star size={12} className="text-blue-600 shrink-0" />}
-          {p.PARENTESCO}
-        </span>
-      </td>
-      <td className={td}>{apellidos(p) || '—'}</td>
-      <td className={td}>{p.NOMBRES}</td>
-      <td className={`${td} hidden md:table-cell`}>{p.SEXO === 'F' ? 'F' : p.SEXO === 'M' ? 'M' : '—'}</td>
-      <td className={`${td} hidden lg:table-cell`}>{formatFecha(p.FECHA_NACIMIENTO)}</td>
-      <td className={`${td} text-right`}>{años ?? '—'}</td>
-      <td className={`${td} hidden md:table-cell text-xs`}>{p.TIPO_DOCUMENTO || '—'}</td>
-      <td className={`${td} font-mono text-xs`}>{p.NRO_DOCUMENTO || '—'}</td>
-    </tr>
-  );
-};
+/** Chip de la leyenda de estados (filtra al hacer clic) */
+const ChipEstado = ({ color, nombre, activo, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-pressed={activo}
+    className={`inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs border transition-colors ${activo
+      ? 'border-grafito bg-grafito text-hoja'
+      : 'border-trazo bg-hoja text-grafito hover:border-pizarra'}`}
+  >
+    <span className="w-2.5 h-2.5 rounded-full ring-1 ring-black/15" style={{ backgroundColor: color }} aria-hidden />
+    {nombre}
+  </button>
+);
 
-/** Expedientes: cada bloque = datos del expediente + titular y familiares */
+const Casilla = ({ checked, onChange, children }) => (
+  <label className="inline-flex items-center gap-2 text-sm text-grafito cursor-pointer select-none">
+    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 accent-[var(--grafito)]" />
+    {children}
+  </label>
+);
+
+/** Expedientes como el Excel: una fila por persona, con filtros (en la URL) y exportación */
 const Expedientes = () => {
   const { roles, isAdmin } = useAuthContext();
   const puedeEditar = isAdmin || roles.includes('editor');
+  const [params, setParams] = useSearchParams();
+  const { toast, avisar } = useToast();
 
-  const [filtros, setFiltros] = useState({ q: '', anio: '', tramite: '' });
-  const [busqueda, setBusqueda] = useState('');
-  const [page, setPage] = useState(1);
+  const filtros = useMemo(
+    () => Object.fromEntries(FILTROS_REGISTRO.map((k) => [k, params.get(k) ?? ''])),
+    [params],
+  );
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const claveDatos = useMemo(() => JSON.stringify({ ...filtros, page }), [filtros, page]);
+
+  const [busqueda, setBusqueda] = useState(filtros.q);
   const [data, setData] = useState(null);
   const [catalogos, setCatalogos] = useState(null);
   const [error, setError] = useState(null);
+  const [verMas, setVerMas] = useState(() => MAS_FILTROS.some((k) => params.get(k)));
   const [modal, setModal] = useState({ open: false, expediente: null });
-  const { toast, avisar } = useToast();
+  const [exportando, setExportando] = useState(false);
+
+  /** Cambia filtros en la URL (vuelve a la página 1) */
+  const setFiltros = useCallback((cambios) => {
+    setParams((prev) => {
+      const p = new URLSearchParams(prev);
+      for (const [k, v] of Object.entries(cambios)) {
+        if (v === '' || v == null) p.delete(k); else p.set(k, String(v));
+      }
+      if (!('page' in cambios)) p.delete('page');
+      return p;
+    }, { replace: true });
+  }, [setParams]);
 
   const cargar = useCallback(async () => {
     try {
-      setData(await expedientesService.listar({ ...filtros, page }));
+      const { page: pagina, ...f } = JSON.parse(claveDatos);
+      setData(await expedientesService.registro(f, pagina));
       setError(null);
     } catch (e) { setError(e.message); }
-  }, [filtros, page]);
+  }, [claveDatos]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -66,18 +90,20 @@ const Expedientes = () => {
     expedientesService.catalogos().then(setCatalogos).catch((e) => setError(e.message));
   }, []);
 
+  // La búsqueda del navbar cambia ?q=: reflejarla en el campo
+  useEffect(() => { setBusqueda(filtros.q); }, [filtros.q]);
+
   // Búsqueda con espera para no consultar en cada tecla
   useEffect(() => {
-    const t = setTimeout(() => {
-      setFiltros((f) => (f.q === busqueda ? f : { ...f, q: busqueda }));
-      setPage(1);
-    }, 350);
+    if (busqueda === filtros.q) return undefined;
+    const t = setTimeout(() => setFiltros({ q: busqueda.trim() }), 350);
     return () => clearTimeout(t);
-  }, [busqueda]);
+  }, [busqueda, filtros.q, setFiltros]);
 
-  const setFiltro = (campo) => (e) => {
-    setFiltros((f) => ({ ...f, [campo]: e.target.value }));
-    setPage(1);
+  const editar = async (id) => {
+    try {
+      setModal({ open: true, expediente: await expedientesService.obtener(id) });
+    } catch (e) { avisar(e.message, true); }
   };
 
   const eliminar = async (exp) => {
@@ -85,19 +111,47 @@ const Expedientes = () => {
     try {
       await expedientesService.eliminar(exp.ID_EXPEDIENTE);
       avisar('Expediente eliminado');
+      avisarCambioExpedientes();
       cargar();
     } catch (e) { avisar(e.message, true); }
   };
 
-  const onGuardado = () => {
-    avisar(modal.expediente ? 'Expediente actualizado' : 'Expediente registrado');
+  /** aviso: el expediente se guardó pero falló el archivo */
+  const onGuardado = (_guardado, aviso) => {
+    avisar(aviso ?? (modal.expediente ? 'Expediente guardado' : 'Expediente registrado'), Boolean(aviso));
     setModal({ open: false, expediente: null });
+    avisarCambioExpedientes();
     cargar();
   };
 
+  const exportar = async () => {
+    setExportando(true);
+    try {
+      const { rows } = await expedientesService.registroCompleto(filtros);
+      if (!rows.length) { avisar('No hay filas para exportar con estos filtros', true); return; }
+      const sufijo = [filtros.tramite?.toLowerCase(), filtros.anio].filter(Boolean).join('_');
+      const hoy = new Date().toISOString().slice(0, 10);
+      await exportarExcel(rows, catalogos?.estados, `expedientes${sufijo ? `_${sufijo}` : ''}_${hoy}.xlsx`);
+      avisar('Excel descargado');
+    } catch (e) {
+      avisar(e.message, true);
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const masActivos = MAS_FILTROS.filter((k) => filtros[k]).length + (filtros.grupo === '0' ? 1 : 0);
+  const hayFiltros = FILTROS_REGISTRO.some((k) => filtros[k]);
+  const limpiar = () => { setBusqueda(''); setParams(new URLSearchParams(), { replace: true }); };
+  const set = (k) => (e) => setFiltros({ [k]: e.target.value });
+  const alternarEstado = (valor) => setFiltros({ estado: filtros.estado === valor ? '' : valor });
+
   return (
-    <div className="p-4 sm:p-6">
-      <PageHeader icon={FolderOpen} title="Expedientes">
+    <div className="p-4 sm:p-6 lg:px-8">
+      <PageHeader title="Expedientes">
+        <Button variant="secondary" onClick={exportar} disabled={exportando || !data?.total}>
+          <FileSpreadsheet size={16} /> {exportando ? 'Exportando…' : 'Exportar a Excel'}
+        </Button>
         {puedeEditar && (
           <Button onClick={() => setModal({ open: true, expediente: null })} disabled={!catalogos}>
             <Plus size={16} /> Nuevo expediente
@@ -105,91 +159,116 @@ const Expedientes = () => {
         )}
       </PageHeader>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Nº de expediente, nombre, apellido o documento"
-            className="pl-9"
-          />
+      {/* Todos los filtros en un solo panel: búsqueda y periodo arriba, detalle y estado debajo */}
+      <section aria-label="Filtros" className="bg-hoja border border-trazo rounded-lg mb-3">
+        <div className="flex flex-wrap items-center gap-2 p-3">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-pizarra pointer-events-none" aria-hidden />
+            <Input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por nº de expediente, nombre, apellido o documento"
+              aria-label="Buscar"
+              className="pl-9"
+            />
+          </div>
+          <Select value={filtros.anio} onChange={set('anio')} className="w-auto" aria-label="Año de solicitud">
+            <option value="">Todos los años</option>
+            {ANIOS.map((a) => <option key={a} value={a}>{a}</option>)}
+          </Select>
+          <Select value={filtros.tramite} onChange={set('tramite')} className="w-auto" aria-label="Trámite">
+            <option value="">Todos los trámites</option>
+            {TRAMITES.map((t) => <option key={t.value} value={t.value}>{t.plural}</option>)}
+          </Select>
+          <Select value={filtros.origen} onChange={set('origen')} className="w-auto max-w-[14rem]" aria-label="Origen">
+            <option value="">Todos los orígenes</option>
+            {catalogos?.origenes.map((o) => <option key={o.ID_ORIGEN} value={o.ID_ORIGEN}>{o.NOMBRE}</option>)}
+          </Select>
+          <Button variant={verMas || masActivos ? 'secondary' : 'ghost'} onClick={() => setVerMas((v) => !v)} aria-expanded={verMas}>
+            <SlidersHorizontal size={15} /> Más filtros{masActivos ? ` (${masActivos})` : ''}
+          </Button>
         </div>
-        <Select value={filtros.anio} onChange={setFiltro('anio')} className="w-auto">
-          <option value="">Todos los años</option>
-          {ANIOS.map((a) => <option key={a} value={a}>{a}</option>)}
-        </Select>
-        <Select value={filtros.tramite} onChange={setFiltro('tramite')} className="w-auto">
-          <option value="">Todos los trámites</option>
-          {TRAMITES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </Select>
-      </div>
+
+        {verMas && (
+          <div className="border-t border-trazo p-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            <Select value={filtros.parentesco} onChange={set('parentesco')} aria-label="Parentesco">
+              <option value="">Cualquier parentesco</option>
+              {catalogos?.parentescos.map((x) => <option key={x.ID_PARENTESCO} value={x.ID_PARENTESCO}>{x.NOMBRE}</option>)}
+            </Select>
+            <Select value={filtros.nacionalidad} onChange={set('nacionalidad')} aria-label="Nacionalidad">
+              <option value="">Cualquier nacionalidad</option>
+              {catalogos?.nacionalidades.map((x) => <option key={x.ID_NACIONALIDAD} value={x.ID_NACIONALIDAD}>{x.NOMBRE}</option>)}
+            </Select>
+            <Select value={filtros.tipodoc} onChange={set('tipodoc')} aria-label="Tipo de documento">
+              <option value="">Cualquier documento</option>
+              {catalogos?.tiposDocumento.map((x) => <option key={x.ID_TIPO_DOCUMENTO} value={x.ID_TIPO_DOCUMENTO}>{x.NOMBRE}</option>)}
+            </Select>
+            <Select value={filtros.sexo} onChange={set('sexo')} aria-label="Sexo">
+              <option value="">Ambos sexos</option>
+              <option value="F">Femenino</option>
+              <option value="M">Masculino</option>
+            </Select>
+            <Select value={filtros.edad} onChange={set('edad')} aria-label="Edad">
+              <option value="">Todas las edades</option>
+              <option value="menores">Menores de 18</option>
+              <option value="adultos">18 o más</option>
+            </Select>
+            <div className="sm:col-span-2 lg:col-span-5 flex flex-wrap gap-x-6 gap-y-2 pt-1">
+              <Casilla checked={filtros.sinnro === '1'} onChange={(v) => setFiltros({ sinnro: v ? '1' : '' })}>Sin número de expediente</Casilla>
+              <Casilla checked={filtros.sinarchivo === '1'} onChange={(v) => setFiltros({ sinarchivo: v ? '1' : '' })}>Sin archivo</Casilla>
+              <Casilla checked={filtros.grupo !== '0'} onChange={(v) => setFiltros({ grupo: v ? '' : '0' })}>
+                Mostrar el grupo familiar completo
+              </Casilla>
+            </div>
+          </div>
+        )}
+
+        {/* Estado = colores de fila del Excel; clic filtra, otro clic quita */}
+        {catalogos?.estados.length > 0 && (
+          <div className="border-t border-trazo px-3 py-2.5 flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por estado">
+            <span className="text-[13px] text-pizarra mr-1">Estado</span>
+            {catalogos.estados.map((e) => (
+              <ChipEstado
+                key={e.ID_ESTADO}
+                color={e.COLOR}
+                nombre={e.NOMBRE}
+                activo={filtros.estado === String(e.ID_ESTADO)}
+                onClick={() => alternarEstado(String(e.ID_ESTADO))}
+              />
+            ))}
+            <ChipEstado color="var(--hoja)" nombre="Sin estado" activo={filtros.estado === 'sin'} onClick={() => alternarEstado('sin')} />
+          </div>
+        )}
+      </section>
 
       <ErrorAlert>{error}</ErrorAlert>
 
-      {!data ? <div className="flex justify-center py-16"><Spinner /></div> : !data.rows.length ? (
-        <EmptyState icon={FolderOpen} title="Sin expedientes" subtitle="Prueba con otros filtros o registra uno nuevo." />
+      {!data ? <div className="py-16"><Spinner /></div> : !data.rows.length ? (
+        <EmptyState
+          icon={FolderOpen}
+          title={hayFiltros ? 'Ningún expediente coincide con estos filtros' : 'Todavía no hay expedientes'}
+          subtitle={hayFiltros ? 'Quita alguno o registra un expediente nuevo.' : 'Registra el primero con «Nuevo expediente».'}
+        >
+          {hayFiltros && <Button variant="secondary" onClick={limpiar}>Quitar filtros</Button>}
+        </EmptyState>
       ) : (
         <>
-          <p className="text-xs text-slate-400 mb-2">{data.total} expediente(s)</p>
-          <div className="space-y-3">
-            {data.rows.map((exp) => (
-              <div key={exp.ID_EXPEDIENTE} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl overflow-hidden">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-700 text-sm">
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">
-                    {exp.NRO_EXPEDIENTE ? `Exp. ${exp.NRO_EXPEDIENTE}` : <span className="text-amber-600">Sin nº de expediente</span>}
-                  </span>
-                  <span className="text-slate-500">{formatFecha(exp.FECHA_SOLICITUD)}</span>
-                  <span className="text-slate-500">{exp.ORIGEN}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                    {TRAMITE_LABEL[exp.TIPO_TRAMITE] || exp.TIPO_TRAMITE}
-                  </span>
-                  <span className="text-xs text-slate-400">{exp.PERSONAS.length} persona(s)</span>
-                  <div className="ml-auto flex items-center gap-1">
-                    {exp.URL_PDF && (
-                      <a href={exp.URL_PDF} target="_blank" rel="noopener noreferrer" title="Abrir PDF"
-                        className="p-1.5 text-red-500 hover:text-red-700 rounded-lg">
-                        <FileText size={16} />
-                      </a>
-                    )}
-                    {puedeEditar && (
-                      <IconButton title="Editar" onClick={() => setModal({ open: true, expediente: exp })} disabled={!catalogos}>
-                        <Pencil size={15} />
-                      </IconButton>
-                    )}
-                    {isAdmin && (
-                      <IconButton title="Eliminar" onClick={() => eliminar(exp)} className="hover:text-red-600">
-                        <Trash2 size={15} />
-                      </IconButton>
-                    )}
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-wide text-slate-400">
-                        <th className={th}>Parentesco</th>
-                        <th className={th}>Apellidos</th>
-                        <th className={th}>Nombres</th>
-                        <th className={`${th} hidden md:table-cell`}>Sexo</th>
-                        <th className={`${th} hidden lg:table-cell`}>Nacimiento</th>
-                        <th className={`${th} text-right`}>Edad</th>
-                        <th className={`${th} hidden md:table-cell`}>Tipo doc.</th>
-                        <th className={th}>Nº doc.</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                      {exp.PERSONAS.map((p) => <FilaPersona key={p.ID_PERSONA} p={p} />)}
-                    </tbody>
-                  </table>
-                </div>
-                {exp.OBSERVACIONES && (
-                  <p className="px-4 py-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-700">{exp.OBSERVACIONES}</p>
-                )}
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2 min-h-8">
+            <p className="text-[13px] text-pizarra cifras">
+              {plural(data.total, 'expediente', 'expedientes')}, {plural(data.personas, 'persona coincide', 'personas coinciden')}
+            </p>
+            {hayFiltros && <Button variant="ghost" size="sm" onClick={limpiar}><X size={14} /> Quitar filtros</Button>}
           </div>
-          <Paginacion page={data.page} total={data.total} pageSize={data.pageSize} onPage={setPage} />
+          <RegistroTabla
+            rows={data.rows}
+            puedeEditar={puedeEditar && Boolean(catalogos)}
+            puedeEliminar={isAdmin}
+            onEditar={editar}
+            onEliminar={eliminar}
+            onVerArchivo={(id) => abrirArchivo(id).catch((e) => avisar(e.message, true))}
+          />
+          <Paginacion page={data.page} total={data.total} pageSize={data.pageSize} onPage={(p) => setFiltros({ page: p })} />
         </>
       )}
 

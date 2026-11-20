@@ -13,6 +13,8 @@ export default defineConfig({
   root: '.',
   build: {
     outDir: 'dist',
+    // exceljs (~940 kB) va en su propio chunk y solo se carga al exportar
+    chunkSizeWarningLimit: 1000,
     commonjsOptions: {
       transformMixedEsModules: true,
     }
@@ -23,9 +25,8 @@ export default defineConfig({
     }
   },
   server: {
-    // host: true → escucha en 0.0.0.0 para que otras PCs de la red local
-    // puedan abrir http://<tu-ip>:5173
-    host: true,
+    // Solo esta PC. Para abrir desde otras PCs/celular de la red: host: true
+    host: 'localhost',
     proxy: {
       // API Express local (server.js en la raíz del proyecto)
       '/api': process.env.VITE_PROXY_API || 'http://localhost:3001',

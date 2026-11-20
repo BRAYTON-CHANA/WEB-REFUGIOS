@@ -52,4 +52,22 @@ export const configSections = {
       activoField,
     ],
   },
+  // Colores de fila del Excel: estado del trámite de cada persona
+  estados: {
+    title: 'Estados de persona',
+    table: 'ESTADOS',
+    pk: 'ID_ESTADO',
+    columns: [
+      { key: 'COLOR', label: 'Color', type: 'color' },
+      { key: 'NOMBRE', label: 'Nombre' },
+      { key: 'ORDEN', label: 'Orden' },
+      { key: 'ACTIVO', label: 'Estado', type: 'badge' },
+    ],
+    fields: [
+      nombreField,
+      { name: 'COLOR', label: 'Color', type: 'color', default: '#94A3B8', required: true },
+      { name: 'ORDEN', label: 'Orden en la leyenda', type: 'number', default: 50, min: 0 },
+      activoField,
+    ],
+  },
 };

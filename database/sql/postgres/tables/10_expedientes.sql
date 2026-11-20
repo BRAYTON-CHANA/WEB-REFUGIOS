@@ -1,6 +1,6 @@
 -- ============================================
 -- EXPEDIENTES: lo que comparte el grupo familiar (en el Excel, las celdas
--- combinadas): número Q2, origen, fecha de solicitud y PDF.
+-- combinadas): número Q2, origen, fecha de solicitud y archivo (PDF).
 -- NRO_EXPEDIENTE es opcional (hay solicitudes aún sin número) y único si existe.
 -- TIPO_TRAMITE reemplaza las hojas del Excel (solicitudes, actualizaciones, renuncias).
 -- ============================================
@@ -11,8 +11,12 @@ CREATE TABLE IF NOT EXISTS "EXPEDIENTES" (
     "FECHA_SOLICITUD" DATE NOT NULL,
     "TIPO_TRAMITE" VARCHAR(20) NOT NULL DEFAULT 'SOLICITUD'
         CONSTRAINT "CHK_EXPEDIENTES_TRAMITE" CHECK ("TIPO_TRAMITE" IN ('SOLICITUD', 'ACTUALIZACION', 'RENUNCIA')),
-    "URL_PDF" VARCHAR(500) NULL,
-    "OBSERVACIONES" VARCHAR(1000) NULL,
+    -- Archivo del expediente ("Acceso digital" del Excel): uno por expediente, en el
+    -- bucket privado "expedientes" de Supabase Storage. ARCHIVO_RUTA = ruta del objeto.
+    "ARCHIVO_RUTA" VARCHAR(300) NULL,
+    "ARCHIVO_NOMBRE" VARCHAR(255) NULL,
+    "ARCHIVO_FECHA" TIMESTAMPTZ NULL,
+    "OBSERVACIONES" VARCHAR(4000) NULL,
     "ACTIVO" BOOLEAN NOT NULL DEFAULT TRUE,
     "ID_USUARIO_CREA" INT NULL CONSTRAINT "FK_EXPEDIENTES_USUARIO" REFERENCES "USUARIOS" ("ID_USUARIO") ON DELETE SET NULL,
     "FECHA_CREACION" TIMESTAMPTZ NOT NULL DEFAULT NOW()

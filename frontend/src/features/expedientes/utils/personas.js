@@ -1,8 +1,4 @@
-export const TRAMITES = [
-  { value: 'SOLICITUD', label: 'Solicitud' },
-  { value: 'ACTUALIZACION', label: 'Actualización' },
-  { value: 'RENUNCIA', label: 'Renuncia' },
-];
+export { TRAMITES, TRAMITE_LABEL } from '@/shared/constants/tramites';
 
 /** Edad en años cumplidos desde 'YYYY-MM-DD' (no se guarda en BD) */
 export function edad(fechaNacimiento, hoy = new Date()) {
@@ -17,3 +13,13 @@ export function edad(fechaNacimiento, hoy = new Date()) {
 export const apellidos = (p) => [p.APELLIDO_PATERNO, p.APELLIDO_MATERNO].filter(Boolean).join(' ');
 
 export const nombreCompleto = (p) => [apellidos(p), p.NOMBRES].filter(Boolean).join(', ');
+
+export const MAX_OBSERVACIONES = 4000;
+
+/**
+ * Fondo de fila según el color del estado (como el color de fila del Excel).
+ * Opaco (mezcla con --hoja) para que las columnas fijas no dejen ver lo de abajo;
+ * 20% de tinte mantiene el texto legible en claro y oscuro.
+ */
+export const tinteEstado = (color) => (color ? `color-mix(in srgb, ${color} 20%, var(--hoja))` : 'var(--hoja)');
+export const estadoStyle = (color) => ({ backgroundColor: tinteEstado(color) });

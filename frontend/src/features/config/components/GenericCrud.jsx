@@ -124,7 +124,7 @@ const GenericCrud = ({ config }) => {
         return <Textarea rows={f.rows || 2} value={val ?? ''} onChange={(e) => setV(e.target.value)} />;
       case 'checkbox':
         return (
-          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+          <label className="flex items-center gap-2 text-sm text-grafito">
             <input type="checkbox" className="w-4 h-4" checked={Boolean(val)} onChange={(e) => setV(e.target.checked)} />
             {f.checkLabel || 'Sí'}
           </label>
@@ -142,7 +142,7 @@ const GenericCrud = ({ config }) => {
         return <Input type="number" value={val ?? ''} onChange={(e) => setV(e.target.value)} min={f.min} max={f.max} />;
       case 'color':
         return (
-          <input type="color" className="w-16 h-9 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer"
+          <input type="color" className="w-16 h-9 border border-trazo rounded-md cursor-pointer"
             value={val || '#2563eb'} onChange={(e) => setV(e.target.value)} />
         );
       default:
@@ -154,7 +154,7 @@ const GenericCrud = ({ config }) => {
     <div className="p-4 sm:p-6">
       <PageHeader title={title}>
         {tieneActivo && (
-          <label className="text-xs text-slate-500 flex items-center gap-1.5">
+          <label className="text-xs text-pizarra flex items-center gap-1.5">
             <input type="checkbox" checked={verInactivos} onChange={(e) => setVerInactivos(e.target.checked)} />
             Ver inactivos
           </label>

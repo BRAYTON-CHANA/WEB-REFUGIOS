@@ -1,45 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* Modo oscuro por atributo (ThemeContext pone data-theme en <html>) */
+/* Solo modo claro. Los `dark:` que queden del template no se activan nunca (nadie pone
+   data-theme="dark"); sin esta línea Tailwind los aplicaría con el modo oscuro del sistema. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-@theme {
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* Colores base del tema (claro / oscuro) — cambiar aquí la paleta */
+/*
+ * Paleta (AGENTS.md → Diseño). Base neutra fría: los únicos colores vivos de la app
+ * son los de ESTADOS (colores de fila del Excel). Solo modo claro.
+ */
 :root {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f8fafc;
-  --color-bg-tertiary: #f1f5f9;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #64748b;
-  --color-border: #e2e8f0;
-  --color-border-subtle: #f1f5f9;
+  --grafito: #1E2A32;  /* texto principal, botón primario */
+  --pizarra: #55646F;  /* texto secundario */
+  --niebla: #EEF1F3;   /* fondo de la app, hover */
+  --hoja: #FFFFFF;     /* navbar, sidebar, tablas, modales */
+  --trazo: #D3DAE0;    /* bordes y divisores */
+  --foco: #2F6FDF;     /* anillo de foco y enlaces */
+  color-scheme: light;
 }
 
-[data-theme="dark"] {
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-tertiary: #334155;
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-tertiary: #94a3b8;
-  --color-border: #334155;
-  --color-border-subtle: #1e293b;
+@theme inline {
+  --font-sans: "Public Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+  --color-grafito: var(--grafito);
+  --color-pizarra: var(--pizarra);
+  --color-niebla: var(--niebla);
+  --color-hoja: var(--hoja);
+  --color-trazo: var(--trazo);
+  --color-foco: var(--foco);
 }
 
 body {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
+  background: var(--niebla);
+  color: var(--grafito);
+  font-size: 14px;
 }
 
+/* Cifras alineadas en tablas, fechas y documentos */
+.cifras { font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+
 ::selection {
-  background: rgb(191 219 254);
+  background: color-mix(in srgb, var(--foco) 25%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 *::-webkit-scrollbar {
@@ -50,12 +60,19 @@ body {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgb(203 213 225);
+  background: var(--trazo);
   border-radius: 9999px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgb(148 163 184);
+  background: var(--pizarra);
 }
+
+/* Franja de estados: crece una vez al cargar (sin movimiento si se prefiere reducido) */
+@keyframes franja-crece {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.franja-crece { transform-origin: left; animation: franja-crece 600ms cubic-bezier(0.16, 1, 0.3, 1); }
 
 /* Animaciones existentes */
 @keyframes fade-in {

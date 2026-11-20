@@ -99,7 +99,7 @@ const DropdownMenu = ({ trigger, children, menuClassName = 'w-52', align = 'righ
           <div
             ref={menuRef}
             role="menu"
-            className={`fixed z-[70] bg-white border border-slate-100 rounded-xl shadow-xl py-1 ${menuClassName}`}
+            className={`fixed z-[70] bg-hoja text-grafito border border-trazo rounded-lg shadow-xl py-1 ${menuClassName}`}
             style={pos
               ? { top: pos.top, left: pos.left, visibility: 'visible' }
               : { top: 0, left: 0, visibility: 'hidden' }}

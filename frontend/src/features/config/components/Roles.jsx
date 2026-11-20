@@ -90,9 +90,9 @@ const Roles = () => {
             <Tr key={r.ID_ROL} inactivo={!r.ACTIVO}>
               <Td>
                 <Badge color={r.NOMBRE_ROL === 'admin' ? '#dc2626' : '#2563eb'}>{r.NOMBRE_ROL}</Badge>
-                {r.ES_SISTEMA ? <span className="text-[10px] text-slate-400">sistema</span> : null}
+                {r.ES_SISTEMA ? <span className="text-[10px] text-pizarra">sistema</span> : null}
               </Td>
-              <Td className="text-slate-500 truncate max-w-[240px]">{r.DESCRIPCION || '—'}</Td>
+              <Td className="text-pizarra truncate max-w-[240px]">{r.DESCRIPCION || '—'}</Td>
               <Td>{r.NRO_USUARIOS}</Td>
               <Td><Badge color={r.ACTIVO ? '#16a34a' : '#64748b'}>{r.ACTIVO ? 'Activo' : 'Inactivo'}</Badge></Td>
               <Td className="text-right whitespace-nowrap">

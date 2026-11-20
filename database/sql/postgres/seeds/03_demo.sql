@@ -49,4 +49,17 @@ BEGIN
     VALUES (NULL, o_virtual, '2025-07-22', 'SOLICITUD', 'DEMO: sin número de expediente') RETURNING "ID_EXPEDIENTE" INTO e;
     INSERT INTO "PERSONAS" ("ID_EXPEDIENTE", "ID_PARENTESCO", "ES_TITULAR", "APELLIDO_PATERNO", "APELLIDO_MATERNO", "NOMBRES", "SEXO", "ID_NACIONALIDAD", "FECHA_NACIMIENTO", "ID_TIPO_DOCUMENTO", "NRO_DOCUMENTO")
     VALUES (e, p_tit, TRUE, 'MORALES', 'PAZ', 'DANIEL ANDRES', 'M', n_ven, '1993-05-17', d_pas, 'X1234567');
+
+    -- Estados (colores del Excel). 9000003 mezcla renunciantes y biométricos en el mismo
+    -- grupo; la titular de 9000002 queda sin estado (fila blanca).
+    UPDATE "PERSONAS" p SET "ID_ESTADO" = s."ID_ESTADO"
+    FROM (VALUES ('00123456', 'PASÓ BIOMÉTRICOS'),
+                 ('1001', 'MENOR EN PROCESO DE RENUNCIA'),
+                 ('1002', 'MENOR EN PROCESO DE RENUNCIA'),
+                 ('20000002', 'RENUNCIANTE A LA SOLICITUD'),
+                 ('20000003', 'PASÓ BIOMÉTRICOS'),
+                 ('000900001', 'RENUNCIANTE A LA SOLICITUD'),
+                 ('X1234567', 'NO CONTESTA')) AS v ("DOC", "ESTADO")
+    JOIN "ESTADOS" s ON s."NOMBRE" = v."ESTADO"
+    WHERE p."NRO_DOCUMENTO" = v."DOC";
 END $$;

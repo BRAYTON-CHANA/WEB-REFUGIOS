@@ -1,21 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Eye, EyeOff, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
-/** Clases base de inputs/selects/textarea (para usarlas en elementos nativos) */
+/*
+ * UI compartida. Colores por tokens de index.css (grafito, pizarra, niebla, hoja, trazo,
+ * foco): cambian solos con el tema claro/oscuro. Los colores vivos se reservan para
+ * los estados (ESTADOS.COLOR).
+ */
+
+/** Clases base de inputs/selects/textarea, sin ancho (para usarlas en elementos nativos) */
 export const inputCls =
-  'w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 ' +
-  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ' +
-  'disabled:opacity-60 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100';
+  'px-3 py-2 text-sm rounded-md border border-trazo bg-hoja text-grafito placeholder:text-pizarra/70 ' +
+  'focus:outline-none focus:border-foco focus:ring-2 focus:ring-foco/25 transition-colors ' +
+  'disabled:opacity-60';
 
 export const Spinner = ({ className = '' }) => (
-  <div className={`animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 ${className || 'w-5 h-5'}`} />
+  <div className={`animate-spin rounded-full border-2 border-trazo border-t-grafito ${className || 'w-5 h-5'}`} />
 );
 
 export const EmptyState = ({ icon: Icon, title, subtitle, children }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center">
-    {Icon && <Icon size={40} className="text-slate-300 dark:text-slate-600 mb-3" />}
-    <p className="text-slate-600 dark:text-slate-300 font-medium">{title}</p>
-    {subtitle && <p className="text-slate-400 text-sm mt-1">{subtitle}</p>}
-    {children}
+  <div className="flex flex-col items-start py-12 px-1 max-w-md">
+    {Icon && <Icon size={28} className="text-pizarra mb-3" aria-hidden />}
+    <p className="text-grafito font-semibold">{title}</p>
+    {subtitle && <p className="text-pizarra text-sm mt-1">{subtitle}</p>}
+    {children && <div className="mt-4">{children}</div>}
   </div>
 );
 
@@ -29,12 +36,14 @@ export const Modal = ({ open, onClose, title, children, wide }) => {
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className={`relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto animate-scale-in`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-          <button onClick={onClose} aria-label="Cerrar" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl leading-none transition-colors">&times;</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="absolute inset-0 bg-grafito/40 animate-fade-in" onClick={onClose} />
+      <div className={`relative bg-hoja border border-trazo rounded-lg shadow-2xl w-full ${wide ? 'max-w-3xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto animate-scale-in`}>
+        <div className="sticky top-0 z-10 bg-hoja flex items-center justify-between px-6 py-4 border-b border-trazo">
+          <h3 className="text-base font-semibold text-grafito">{title}</h3>
+          <button onClick={onClose} aria-label="Cerrar" className="p-1 rounded text-pizarra hover:text-grafito hover:bg-niebla">
+            <X size={18} />
+          </button>
         </div>
         <div className="p-6">{children}</div>
       </div>
@@ -42,9 +51,9 @@ export const Modal = ({ open, onClose, title, children, wide }) => {
   );
 };
 
-export const Badge = ({ color = '#64748b', children }) => (
+export const Badge = ({ color = '#55646F', children }) => (
   <span
-    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium text-white shadow-sm mr-1"
+    className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium text-white mr-1"
     style={{ backgroundColor: color }}
   >
     {children}
@@ -54,25 +63,25 @@ export const Badge = ({ color = '#64748b', children }) => (
 export const Paginacion = ({ page, total, pageSize, onPage }) => {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   if (pages <= 1) return null;
-  const btn = 'px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active-press';
+  const btn = 'p-1.5 rounded-md border border-trazo bg-hoja text-grafito disabled:opacity-40 hover:bg-niebla transition-colors';
   return (
-    <div className="flex items-center justify-center gap-3 mt-4 text-sm">
-      <button disabled={page <= 1} onClick={() => onPage(page - 1)} className={btn} aria-label="Anterior">←</button>
-      <span className="text-slate-500 font-medium">{page} / {pages}</span>
-      <button disabled={page >= pages} onClick={() => onPage(page + 1)} className={btn} aria-label="Siguiente">→</button>
+    <div className="flex items-center gap-3 mt-4 text-sm">
+      <button disabled={page <= 1} onClick={() => onPage(page - 1)} className={btn} aria-label="Página anterior"><ChevronLeft size={16} /></button>
+      <span className="text-pizarra cifras">Página {page} de {pages}</span>
+      <button disabled={page >= pages} onClick={() => onPage(page + 1)} className={btn} aria-label="Página siguiente"><ChevronRight size={16} /></button>
     </div>
   );
 };
 
 export const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }) => {
-  const base = 'inline-flex items-center justify-center gap-1.5 font-medium rounded-xl transition-all active-press focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+  const base = 'inline-flex items-center justify-center gap-1.5 font-medium rounded-md transition-colors active-press disabled:opacity-50 disabled:pointer-events-none';
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 shadow-sm',
-    secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus-visible:ring-slate-500 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700',
-    ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 focus-visible:ring-slate-500 dark:text-slate-300 dark:hover:bg-slate-800',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-sm',
+    primary: 'bg-grafito text-hoja hover:bg-grafito/85',
+    secondary: 'bg-hoja text-grafito border border-trazo hover:bg-niebla',
+    ghost: 'bg-transparent text-pizarra hover:text-grafito hover:bg-niebla',
+    danger: 'bg-red-700 text-white hover:bg-red-800',
   };
-  const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2 text-sm', lg: 'px-6 py-2.5 text-base' };
+  const sizes = { sm: 'px-2.5 py-1.5 text-[13px]', md: 'px-3.5 py-2 text-sm', lg: 'px-5 py-2.5 text-base' };
   return (
     <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
       {children}
@@ -81,7 +90,7 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
 };
 
 export const Card = ({ children, className = '', ...props }) => (
-  <div className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl ${className}`} {...props}>
+  <div className={`bg-hoja border border-trazo rounded-lg ${className}`} {...props}>
     {children}
   </div>
 );
@@ -89,24 +98,47 @@ export const Card = ({ children, className = '', ...props }) => (
 /** Etiqueta + control + ayuda */
 export const Field = ({ label, required, help, children }) => (
   <div>
-    {label && <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}{required ? ' *' : ''}</label>}
+    {label && <label className="block text-[13px] font-medium text-pizarra mb-1">{label}{required ? ' *' : ''}</label>}
     {children}
-    {help && <p className="text-[11px] text-slate-400 mt-0.5">{help}</p>}
+    {help && <p className="text-xs text-pizarra/80 mt-1">{help}</p>}
   </div>
 );
 
-export const Input = ({ className = '', ...props }) => <input className={`${inputCls} ${className}`} {...props} />;
+/** Ancho completo salvo que className traiga su propio w-… */
+const conAncho = (className) => (/(^|\s)w-/.test(className) ? className : `w-full ${className}`);
+
+export const Input = ({ className = '', ...props }) => <input className={`${inputCls} ${conAncho(className)}`} {...props} />;
+
+/** Input de contraseña con botón para mostrarla/ocultarla */
+export const PasswordInput = ({ className = '', ...props }) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <input {...props} type={visible ? 'text' : 'password'} className={`${inputCls} pr-10 ${conAncho(className)}`} />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        title={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+        aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+        aria-pressed={visible}
+        className="absolute inset-y-0 right-0 flex items-center px-3 text-pizarra hover:text-grafito"
+      >
+        {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  );
+};
 
 export const Select = ({ className = '', children, ...props }) => (
-  <select className={`${inputCls} ${className}`} {...props}>{children}</select>
+  <select className={`${inputCls} ${conAncho(className)}`} {...props}>{children}</select>
 );
 
 export const Textarea = ({ className = '', rows = 3, ...props }) => (
-  <textarea rows={rows} className={`${inputCls} ${className}`} {...props} />
+  <textarea rows={rows} className={`${inputCls} ${conAncho(className)}`} {...props} />
 );
 
 export const ErrorAlert = ({ children }) => (children ? (
-  <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-300 text-sm rounded-xl px-4 py-3 mb-4">
+  <div role="alert" className="border-l-4 border-red-600 bg-red-50 text-red-800 text-sm rounded-md px-4 py-3 mb-4">
     {children}
   </div>
 ) : null);
@@ -118,10 +150,10 @@ export const ErrorAlert = ({ children }) => (children ? (
  *   </Table>
  */
 export const Table = ({ columns, children }) => (
-  <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl overflow-x-auto">
+  <div className="bg-hoja border border-trazo rounded-lg overflow-x-auto">
     <table className="w-full text-sm">
       <thead>
-        <tr className="text-left text-xs uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-slate-700">
+        <tr className="text-left text-[13px] text-pizarra border-b border-trazo bg-niebla/60">
           {columns.map((c) => <th key={c.label} className={`py-2.5 px-4 font-medium ${c.className || ''}`}>{c.label}</th>)}
         </tr>
       </thead>
@@ -131,28 +163,28 @@ export const Table = ({ columns, children }) => (
 );
 
 export const Tr = ({ inactivo, children }) => (
-  <tr className={`border-b border-slate-50 dark:border-slate-700/60 hover:bg-slate-50/80 dark:hover:bg-slate-700/30 ${inactivo ? 'opacity-50' : ''}`}>
+  <tr className={`border-b border-trazo/70 last:border-0 hover:bg-niebla/60 ${inactivo ? 'opacity-50' : ''}`}>
     {children}
   </tr>
 );
 
 export const Td = ({ className = '', children }) => (
-  <td className={`py-2.5 px-4 text-slate-700 dark:text-slate-200 ${className}`}>{children}</td>
+  <td className={`py-2.5 px-4 text-grafito ${className}`}>{children}</td>
 );
 
 /** Botón de icono para acciones de fila */
 export const IconButton = ({ title, className = '', children, ...props }) => (
-  <button title={title} aria-label={title} className={`p-1.5 text-slate-400 hover:text-blue-600 rounded-lg transition-colors ${className}`} {...props}>
+  <button title={title} aria-label={title} className={`p-1.5 text-pizarra hover:text-grafito hover:bg-niebla rounded-md transition-colors ${className}`} {...props}>
     {children}
   </button>
 );
 
-/** Encabezado de página: título (con icono opcional) y acciones a la derecha */
+/** Encabezado de página: título y acciones a la derecha (el icono es opcional y discreto) */
 export const PageHeader = ({ icon: Icon, title, children }) => (
-  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-    <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-      {Icon && <Icon size={20} />} {title}
+  <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
+    <h1 className="text-[26px] leading-tight font-semibold text-grafito flex items-center gap-2.5">
+      {Icon && <Icon size={22} className="text-pizarra" aria-hidden />} {title}
     </h1>
-    {children && <div className="flex items-center gap-3">{children}</div>}
+    {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
   </div>
 );

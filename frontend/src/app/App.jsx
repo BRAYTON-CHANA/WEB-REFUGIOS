@@ -5,12 +5,12 @@ import { AppLayout } from '@/features/layout';
 import { APP_CONFIG } from '@/app/config';
 
 // Páginas: solo desde app/views/<ruta> (ver AGENTS.md → "Dónde va cada cosa")
-import Inicio from '@/app/views/inicio';
 import NotFound from '@/app/views/not-found';
 import Login from '@/app/views/login';
 import CambiarContrasena from '@/app/views/cambiar-contrasena';
 import Calendario from '@/app/views/calendario';
 import Expedientes from '@/app/views/expedientes';
+import Reportes from '@/app/views/reportes';
 import Config from '@/app/views/config';
 
 const App = () => {
@@ -27,8 +27,9 @@ const App = () => {
 
       {/* Protegidas, dentro del layout */}
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/" element={<Inicio />} />
+        <Route path="/" element={<Navigate to="/expedientes" replace />} />
         <Route path="/expedientes" element={<Expedientes />} />
+        <Route path="/reportes" element={<Reportes />} />
         <Route path="/calendario" element={<Calendario />} />
         <Route path="/config/:seccion" element={<Config />} />
         <Route path="*" element={<NotFound />} />
